@@ -52,7 +52,7 @@ void setup(void){
 
   //mDNS init - sets the domain to "pslab.local"
   if (MDNS.begin("pslab")) {
-    Serial.println("MDNS responder started");
+    delay(1); //make sure to do nothing!
   }
 
   server.on("/", handleRoot);
