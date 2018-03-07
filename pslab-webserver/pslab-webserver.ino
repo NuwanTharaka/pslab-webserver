@@ -14,10 +14,35 @@
 const char* ssid = "testssid";
 const char* password = "testpassword";
 
+String incomingStr = "";
+
 ESP8266WebServer server(80);
 
 void handleRoot() {
-  server.send(200, "text/plain", "Welcome to the PSLab!");
+  server.on("/version.txt", [](){
+    server.send(200, "text/html", incomingStr);
+  });
+  
+  server.on("/", [](){
+   String page = "<h1>Version Number</h1><p id=\"data\">""</p>\r\n";
+   page += "<script>\r\n";
+   page += "var x = setInterval(function() {loadData(\"data.txt\",updateData)}, 1000);\r\n";
+   page += "function loadData(url, callback){\r\n";
+   page += "var xhttp = new XMLHttpRequest();\r\n";
+   page += "xhttp.onreadystatechange = function(){\r\n";
+   page += " if(this.readyState == 4 && this.status == 200){\r\n";
+   page += " callback.apply(xhttp);\r\n";
+   page += " }\r\n";
+   page += "};\r\n";
+   page += "xhttp.open(\"GET\", url, true);\r\n";
+   page += "xhttp.send();\r\n";
+   page += "}\r\n";
+   page += "function updateData(){\r\n";
+   page += " document.getElementById(\"data\").innerHTML = this.responseText;\r\n";
+   page += "}\r\n";
+   page += "</script>\r\n";
+   server.send(200, "text/html", page);
+});
 }
 
 void handleNotFound(){
@@ -37,7 +62,7 @@ void handleNotFound(){
 
 void setup(void){
   //init UART communication
-  Serial.begin(1000000);
+  Serial.begin(1000000); //have to check and change accrodingly
 
   //iniit WiFi
   WiFi.mode(WIFI_STA);
@@ -47,9 +72,20 @@ void setup(void){
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
   }
-  
-  //UART communication initialization with PSLab hardware goes here
 
+   //UART to retrieve version info
+  Serial.write(11);
+  Serial.write(5);
+
+  incomingStr.reserve(50);
+
+  while(!Serial.available());
+
+  if (Serial.available()) {
+    // read the incoming String
+    incomingStr = Serial.readStringUntil('\n');
+  }
+  
   //mDNS init - sets the domain to "pslab.local"
   if (MDNS.begin("pslab")) {
     delay(1); //make sure to do nothing!
@@ -63,6 +99,7 @@ void setup(void){
   
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
+
 }
 
 void loop(void){
