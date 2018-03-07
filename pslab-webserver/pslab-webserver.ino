@@ -37,7 +37,7 @@ void handleNotFound(){
 
 void setup(void){
   //init UART communication
-  Serial.begin(115200);
+  Serial.begin(1000000);
 
   //iniit WiFi
   WiFi.mode(WIFI_STA);
