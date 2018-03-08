@@ -87,10 +87,8 @@ void setup(void){
   }
   
   //mDNS init - sets the domain to "pslab.local"
-  if (MDNS.begin("pslab")) {
-    delay(1); //make sure to do nothing!
-  }
-
+  MDNS.begin("pslab");
+  
   server.on("/", handleRoot);
 
   server.onNotFound(handleNotFound);
