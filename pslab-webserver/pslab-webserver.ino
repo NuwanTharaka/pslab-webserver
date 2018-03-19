@@ -10,6 +10,7 @@
 #include <WiFiClient.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
+#include <WebSocketsServer.h>
 
 const char* ssid = "testssid";
 const char* password = "testpassword";
@@ -17,6 +18,7 @@ const char* password = "testpassword";
 String incomingStr = "";
 
 ESP8266WebServer server(80);
+WebSocketsServer ws = WebSocketsServer(81);
 
 void handleRoot() {
   server.on("/version.txt", [](){
@@ -60,6 +62,47 @@ void handleNotFound(){
   server.send(404, "text/plain", message);
 }
 
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+
+    switch(type) {
+        case WStype_DISCONNECTED:
+            break;
+        case WStype_CONNECTED:
+            {
+            IPAddress ip = ws.remoteIP(num);
+        
+            // send message to client
+            
+            //UART to retrieve version info
+            Serial.write(11);
+            Serial.write(5);
+          
+            incomingStr.reserve(50);
+          
+            while(!Serial.available());
+          
+            if (Serial.available()) {
+              // read the incoming String
+              incomingStr = Serial.readStringUntil('\n');
+            }
+            ws.sendTXT(num, incomingStr);
+            }
+            break;
+        case WStype_TEXT:
+            // send message to client
+            // webSocket.sendTXT(num, "message here");
+
+            // send data to all connected clients
+            // webSocket.broadcastTXT("message here");
+            break;
+        case WStype_BIN:
+            // send message to client
+            //ws.sendBIN(num, payload, length);
+            break;
+    }
+
+}
+
 void setup(void){
   //init UART communication
   Serial.begin(1000000); //have to check and change accrodingly
@@ -73,18 +116,9 @@ void setup(void){
     delay(500);
   }
 
-   //UART to retrieve version info
-  Serial.write(11);
-  Serial.write(5);
-
-  incomingStr.reserve(50);
-
-  while(!Serial.available());
-
-  if (Serial.available()) {
-    // read the incoming String
-    incomingStr = Serial.readStringUntil('\n');
-  }
+  //start webSocket server
+  ws.begin();
+  ws.onEvent(webSocketEvent);
   
   //mDNS init - sets the domain to "pslab.local"
   MDNS.begin("pslab");
@@ -94,12 +128,15 @@ void setup(void){
   server.onNotFound(handleNotFound);
 
   server.begin();
-  
+    
   // Add service to MDNS-SD
   MDNS.addService("http", "tcp", 80);
+  MDNS.addService("ws", "tcp", 81);
+
 
 }
 
 void loop(void){
+  ws.loop();
   server.handleClient();
 }
