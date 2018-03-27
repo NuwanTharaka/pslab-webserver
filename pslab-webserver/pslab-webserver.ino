@@ -1,4 +1,4 @@
- /*
+/*
   * This is a HTTP web server running on esp8622
   * This web server will interface the functionalities of the PSLab to the user who access it through web
  
@@ -100,7 +100,6 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length
             //ws.sendBIN(num, payload, length);
             break;
     }
-
 }
 
 void setup(void){
