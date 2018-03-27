@@ -20,6 +20,7 @@ String incomingStr = "";
 ESP8266WebServer server(80);
 WebSocketsServer ws = WebSocketsServer(81);
 
+//webpages will be developed externally and integrated later
 void handleRoot() {
   server.on("/version.txt", [](){
     server.send(200, "text/html", incomingStr);
